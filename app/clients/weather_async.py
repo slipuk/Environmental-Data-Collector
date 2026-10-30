@@ -26,7 +26,6 @@ async def afetch_weather(
     }
 
     async with semaphore:
-        start = time.perf_counter()
         response = await aclient.get(
             url = weather_url,
             params = params,
@@ -36,8 +35,7 @@ async def afetch_weather(
 
     log.message(
         "DEBUG",
-        f"GET weather lat={lat} lon={lon} status={response.status_code} "
-        f"elapsed={time.perf_counter() - start:.2f}s"
+        f"GET weather lat={lat} lon={lon} status={response.status_code}"
     )
 
     data: dict = response.json()
@@ -57,7 +55,6 @@ async def afetch_air_quality(
     }
 
     async with semaphore:
-        start = time.perf_counter()
         response = await aclient.get(
             url = air_quality_url,
             params = params,
@@ -67,8 +64,7 @@ async def afetch_air_quality(
 
     log.message(
         "DEBUG",
-        f"GET air_quality lat={lat} lon={lon} status={response.status_code} "
-        f"elapsed={time.perf_counter() - start:.2f}s"
+        f"GET air_quality lat={lat} lon={lon} status={response.status_code}"
     )
 
     data: dict = response.json()
@@ -79,6 +75,7 @@ async def afetch_city(
         semaphore: asyncio.Semaphore,
         city: City
     ) -> RawCityData:
+
     lat, lon = city.latitude, city.longitude
     weather_data, air_quality_data = await asyncio.gather(
         afetch_weather(aclient, semaphore, lat, lon),
@@ -93,6 +90,7 @@ async def afetch_city(
             f"{type(weather_data).__name__}: {weather_data}"
         )
         weather_data = None
+
     if isinstance(air_quality_data, Exception):
         log.message(
             "WARNING",
@@ -108,7 +106,6 @@ async def afetch_city(
     )
 
 async def acollect(cities: list[City]) -> list[RawCityData]:
-    start = time.perf_counter()
     semaphore = asyncio.Semaphore(MAX_CONCURRENT_REQUESTS)
     async with httpx.AsyncClient() as aclient:
         results = list(await asyncio.gather(
@@ -117,8 +114,7 @@ async def acollect(cities: list[City]) -> list[RawCityData]:
 
     log.message(
         "DEBUG",
-        f"async fetch finished: cities={len(cities)} "
-        f"elapsed={time.perf_counter() - start:.2f}s"
+        f"async fetch finished: cities={len(cities)}"
     )
 
     return results

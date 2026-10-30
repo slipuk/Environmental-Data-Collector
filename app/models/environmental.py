@@ -4,13 +4,13 @@ from datetime import datetime, timezone
 def utc_now() -> datetime:
     return datetime.now(timezone.utc)
 
-#supporting dataclass for async functions output
 @dataclass
 class City:
     name: str
     latitude: float
     longitude: float
 
+#supporting dataclass for async functions output
 @dataclass
 class RawCityData:
     city: City

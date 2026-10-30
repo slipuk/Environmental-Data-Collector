@@ -27,15 +27,13 @@ def fetch_weather(lat: float, lon: float):
         "longitude": lon,
         "current": ["temperature_2m", "relative_humidity_2m", "wind_speed_10m"]
     }
-    start = time.perf_counter()
     response = session.get(url=weather_url, params=params, timeout=timeout)
 
     response.raise_for_status()
 
     log.message(
         "DEBUG",
-        f"GET weather lat={lat} lon={lon} status={response.status_code} "
-        f"elapsed={time.perf_counter() - start:.2f}s"
+        f"GET weather lat={lat} lon={lon} status={response.status_code}"
     )
 
     data = response.json()
@@ -55,8 +53,7 @@ def fetch_air_quality(lat: float, lon: float):
 
     log.message(
         "DEBUG",
-        f"GET air_quality lat={lat} lon={lon} status={response.status_code} "
-        f"elapsed={time.perf_counter() - start:.2f}s"
+        f"GET air_quality lat={lat} lon={lon} status={response.status_code}"
     )
 
     data = response.json()

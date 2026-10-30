@@ -39,13 +39,15 @@ cities_async = [
 ]
 
 from app.service.collect import collect_city_data, async_collect_city_data
-from app.storage.json_writer import json_writer, csv_writer
 from app.service.logger import log
 
+from app.storage.json_writer import json_writer, csv_writer
+
+from app.service.wrappers import timeit 
+
+@timeit
 def sync_fetch():
     log.message("INFO", f"sync collection started: cities={len(cities)}")
-    
-    start = time.perf_counter()
 
     for city in cities:
         city_data = collect_city_data(city)
@@ -54,31 +56,20 @@ def sync_fetch():
             continue
         json_writer.write_to_json(city_data)
         csv_writer.write_to_csv(city_data)
-        print(f"Fetch data for {city_data.city}")
-    
-    ttx = time.perf_counter() - start
-    
-    log.message("INFO", f"sync collection finished: elapsed={ttx:.2f}s")
-    print(f"Fetched data for {ttx}")
 
+
+@timeit
 async def async_fetch():
     log.message("INFO", f"async collection started: cities={len(cities_async)}")
     
-    start = time.perf_counter()
-    
     env_data = await async_collect_city_data(cities=cities_async)
-    
-    ttx = time.perf_counter() - start
     
     try:
         json_writer.write_to_json(env_data)
         csv_writer.write_to_csv(env_data)
     except TypeError as e:
         log.message("ERROR", f"writing to file failed {type(e).__name__}: {e}")
-        raise 
-
-    log.message("INFO", f"async collection finished: elapsed={ttx:.2f}s")
-    print("Execution time:", ttx)
+        raise
     
 if __name__ == "__main__":
     try:
