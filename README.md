@@ -161,6 +161,7 @@ except Exception as e:
 ```
 
 ## Sync vs Async Experiment
+Terminal output:
 ```bash
 run 1)
 INFO async_fetch finished: elapsed=0.842
