@@ -41,7 +41,7 @@ cities_async = [
 from app.service.collect import collect_city_data, async_collect_city_data
 from app.service.logger import log
 
-from app.storage.json_writer import json_writer, csv_writer
+from app.storage.file_writer import json_writer, csv_writer
 
 from app.service.wrappers import timeit 
 

@@ -1,14 +1,14 @@
 # Async Environmental Data Collector
 ## Problem
-The problem of modern world is that we have access to large amounts of data and materials but cannot use them in proper way because of lack of organization. Today big data is being fed to machine learning models, but it is useless without structure.
+The problem of the modern world is that we have access to large amounts of data and materials but cannot use them properly because of a lack of organization. Today big data is being fed to machine learning models, but it is useless without structure.
 
-Environmental data collector is the solution to this problem. It fetches data user needs and store it in predicted way, without suprises, unexpected data forms and without undefined behaviour.
+Environmental data collector is the solution to this problem. It fetches the data the user needs and stores it in a predictable way, without surprises, unexpected data forms, or undefined behaviour.
 
 ## Architecture
-All of the requests go through clients programs, they fetch all of the data from weather API. All of the fetched information goes through validation (checks the data correctness), normalization (transforms data from raw responses string responses to objects), building record (creating one object with all needed information). Clean information is parsed back to JSON and strings to be written to disk. Every step of the program is being logged with unified log structure
+All requests go through the client modules, which fetch data from the weather API. All fetched information goes through validation (checking data correctness), normalization (transforming raw response strings into objects), and record building (creating one object with all needed information). Clean data is serialized to JSON and CSV and written to disk. Every step of the program is logged with a unified log structure.
 
 ```log
-[<time>][<type of information INFO | WARNING | ERROR>] message
+[<time>][<type of information INFO | DEBUG | WARNING | ERROR>] message
 [2026-10-30T13:45:12][INFO] async collection started: cities=15
 [2026-10-30T13:45:17][WARNING] skipping 2 records with failed requests
 ```
@@ -28,7 +28,7 @@ All of the requests go through clients programs, they fetch all of the data from
 │   │   ├── transform.py
 │   │   └── wrappers.py
 │   └── storage
-│       └── json_writer.py
+│       └── file_writer.py
 ├── data
 │   ├── environmental_data.csv
 │   └── environmental_data.jsonl
@@ -37,9 +37,9 @@ All of the requests go through clients programs, they fetch all of the data from
 └── README.md
 ```
 
-The main engine of data collector is clients folder, it fetches data in two ways: synchronious and asynchronious
+The main engine of the data collector is the clients folder; it fetches data in two ways: synchronous and asynchronous.
 
-Models folder define the structure of data.
+The models folder defines the structure of the data.
 ```python 
 @dataclass
 class EnvironmentalModel:
@@ -55,57 +55,81 @@ class EnvironmentalModel:
     pm25: float | None = None
     pm10: float | None = None
 ```
-The main dataclass for structuring data
+This is the main dataclass for structuring data.
 
 Service folder:
 ```transform.py```: validates the data and constructs data models
-```colect.py```: combines clients and transformation
+```collect.py```: combines clients and transformation
 ```logger.py```: logging service
-```wrappers.py```: wrapping functions
+```wrappers.py```: decorators for timing functions
 
-Storage folder saves transformed data to json and csv format
-Logs: log created for debugging
+Storage folder saves transformed data in JSON and CSV formats.
+Logs are created for debugging.
 
 ## Data Sources
 [Open-Meteo](https://open-meteo.com)
 ## Installation
-It is better install to virtual environment
-#### Linux / MacOS
+
+This project uses a virtual environment. Run these commands from the project root.
+
+1. Clone the repository and enter its directory:
+
+```bash
+git clone https://github.com/slipuk/Environmental-Data-Collector.git
+cd Environmental-Data-Collector
+```
+
+2. Create and activate a virtual environment.
+
+#### Linux / macOS
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
 ```
-#### Windows
-```bash
-python -m venv c:\path\to\myenv
-```
-##### cmd
-```bash
-<venv>\Scripts\activate.bat
-```
-##### PowerShell
-```bash
-<venv>\Scripts\Activate.ps1
-```
+
+#### Windows (cmd)
 
 ```bash
-git clone https://github.com/slipuk/Environmental-Data-Collector.git
-pip install -r requirements.txt
+python -m venv .venv
+.venv\Scripts\activate.bat
 ```
+
+#### Windows (PowerShell)
+
+```powershell
+python -m venv .venv
+.venv\Scripts\Activate.ps1
+```
+
+3. Install the dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
 ## Usage
+
+Run the collector from the project root:
 
 ```bash
 python -m app.main
 ```
+
+This runs the asynchronous collection first, then the synchronous collection. Results are appended to `data/environmental_data.jsonl` and `data/environmental_data.csv`, and logs are written to `logs/log.log`.
+
+Note: run it from the repository root, because `data/` and `logs/` paths are relative to the current directory.
+
 ## Output
-Output goes to many places like log file, json and csv file and terminal
+Output goes to the log file, JSON and CSV files, and the terminal.
 #### Terminal
 ```bash
 INFO async_fetch finished: elapsed=0.807
 INFO sync_fetch finished: elapsed=1.514
 ```
 #### JSON output
-```
+Each line is one JSON object (NDJSON). The example below is formatted for readability:
+```json
 {
     "city": "Amsterdam", 
     "latitude": 52.3676, 
@@ -121,12 +145,12 @@ INFO sync_fetch finished: elapsed=1.514
 }
 ```
 #### CSV output
-```bash
+```csv
 city,latitude,longitude,collected_at,weather_measured_at,air_quality_measured_at,temperature,humidity,wind_speed,pm25,pm10
-Amsterdam,52.3676,4.9041,2026-10-30 10:54:30.790668+00:00,2026-10-30 10:45:00+00:00,2026-10-30 10:00:00+00:00,11.8,91,7.6,31.3,35.3
+Amsterdam,52.3676,4.9041,2026-10-31T11:17:01+00:00,2026-10-31T11:15:00+00:00,2026-10-31T11:00:00+00:00,8.9,89,9.4,10.0,12.6
 ```
 ## Error Handling
-Error handling is implemented in try...except structure and when errors occur functions return None and log all needed information, type of error and error message
+Error handling is implemented with `try...except`. When an error occurs, failed records are skipped and all relevant information is logged, including the error type and message.
 
 ```python
 try:
@@ -157,8 +181,9 @@ INFO sync_fetch finished: elapsed=1.679
 
 ## What I Learned
 
-There have been learned:
-basic python project structure and plan of actions
-data modeling,
-sync and async I/0
-debugging and optimization
+This project taught me:
+
+- basic Python project structure and planning
+- data modeling
+- synchronous and asynchronous I/O
+- debugging and optimization

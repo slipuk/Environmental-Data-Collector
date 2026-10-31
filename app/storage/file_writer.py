@@ -21,11 +21,11 @@ class Writer:
     def check_type_support(self, content: list[EnvironmentalModel] | EnvironmentalModel | None):
         if content is None:
             log.message("WARNING", "skipping write: no records provided")
-            return
-        
+            return []
+
         items = content if isinstance(content, list) else [content]
         valid_items = []
-        
+
         for item in items:
             if item is None:
                 log.message("WARNING", "skipping write: record is None")
@@ -37,10 +37,10 @@ class Writer:
                 )
                 continue
             valid_items.append(item)
-        
-            if not valid_items:
-               log.message("WARNING", "skipping write: no valid records")
-               return
+
+        if not valid_items:
+            log.message("WARNING", "skipping write: no valid records")
+
         return valid_items
 
 class jsonWriter(Writer):
@@ -52,7 +52,9 @@ class jsonWriter(Writer):
 
     def write_to_json(self, content: list[EnvironmentalModel] | EnvironmentalModel | None = None):
         valid_items = self.check_type_support(content=content)
-        
+        if not valid_items:
+            return
+
         with open(self.path_to_file, "a", encoding="utf-8") as json_file:
             for item in valid_items:
                 line = json.dumps(asdict(item), default=self.datetime_default, ensure_ascii=False)
@@ -81,10 +83,18 @@ class csvWriter(Writer):
             writer.writerow(headers)
             
     def parse_model_to_csv_columns(self, model_list: list[EnvironmentalModel]):
-        return [self.datetime_default(value) if isinstance(value, datetime) else value for value in [asdict(model).values() for model in model_list]]
+        rows = []
+        for model in model_list:
+            rows.append([
+                self.datetime_default(value) if isinstance(value, datetime) else value
+                for value in asdict(model).values()
+            ])
+        return rows
 
     def write_to_csv(self, content: list[EnvironmentalModel] | EnvironmentalModel | None = None):
         valid_items = self.check_type_support(content=content)
+        if not valid_items:
+            return
 
         with open(self.path_to_file, "a", encoding="utf-8") as csv_file:
             writer = csv.writer(csv_file)
